@@ -132,8 +132,8 @@ function Hero() {
       {/* 📸 爆改点一：首页右侧完美的 iPhone 15 Pro Max 官方实物大图悬浮展示 */}
       <div className="aspect-square bg-white border border-border-subtle rounded-3xl flex items-center justify-center p-8 overflow-hidden shadow-sm hover:scale-[1.01] transition-transform duration-3xl">
         <img 
-          src="https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&q=80" 
-          alt="Premium iPhone Display" 
+          src="/iphone.png"
+          alt="Premium iPhone Display"
           className="h-full w-full object-contain filter drop-shadow-xl"
         />
       </div>
