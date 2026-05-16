@@ -59,8 +59,8 @@ export default function Home() {
 
         {!loading && products.length === 0 && (
           <div className="bg-white border border-border-subtle rounded-2xl p-8 text-center">
-            <p className="text-ink-secondary mb-1">No devices available right now.</p>
-            <p className="text-xs text-ink-tertiary">
+            <p className="text-ink-secondary mb-1">New arrivals coming soon!</p>
+            <p className="text-xs text-ink-tertiary">Our curated premium inventory is updated daily. Check back shortly.</p>
               Our curated premium inventory is updated daily. Check back shortly.
             </p>
           </div>
