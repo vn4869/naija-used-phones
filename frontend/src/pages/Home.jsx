@@ -61,7 +61,7 @@ export default function Home() {
           <div className="bg-white border border-border-subtle rounded-2xl p-8 text-center">
             <p className="text-ink-secondary mb-1">No devices available right now.</p>
             <p className="text-xs text-ink-tertiary">
-              Sign in to the admin dashboard and add inventory to populate this page.
+              Our curated premium inventory is updated daily. Check back shortly.
             </p>
           </div>
         )}
@@ -95,7 +95,6 @@ function Header() {
         <nav className="hidden sm:flex gap-6 text-sm text-ink-secondary">
           <a href="#shop" className="hover:text-ink transition">Shop</a>
           <a href="#how" className="hover:text-ink transition">How it works</a>
-          <a href="/admin" className="hover:text-ink transition">Admin</a>
         </nav>
         <a href="#" className="flex items-center gap-1.5 text-sm text-ink-secondary">
           <ShoppingBag className="h-4 w-4" />
