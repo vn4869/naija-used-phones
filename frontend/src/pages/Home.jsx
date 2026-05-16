@@ -89,7 +89,7 @@ function Header() {
     <header className="bg-white border-b border-border-subtle">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-baseline gap-2">
-          <span className="text-base font-semibold tracking-[0.18em]">TITAN</span>
+          <span className="text-base font-semibold tracking-[0.18em]">REEF STORE</span>
           <span className="text-[10px] tracking-[0.18em] text-accent-deep font-semibold">NIGERIA</span>
         </div>
         <nav className="hidden sm:flex gap-6 text-sm text-ink-secondary">
@@ -241,7 +241,7 @@ function Footer() {
     <footer className="bg-white border-t border-border-subtle">
       <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="text-xs tracking-[0.14em] text-ink-tertiary font-medium">
-          TITAN NIGERIA · ALL DEVICES IMEI-VERIFIED
+          REEF STORE NIGERIA · ALL DEVICES IMEI-VERIFIED
         </div>
         <div className="flex gap-2 text-xs">
           {['Card', 'Bank transfer', 'USSD'].map((c) => (
