@@ -1,10 +1,10 @@
 /**
  * AdminDashboard — inventory entry + browsing UI.
- * Modified for password prompt restriction & offline fallback models.
+ * Fully restricted with password prompt & offline fallback models and menus.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Plus, Loader2, CheckCircle2, AlertCircle, RefreshCw, Lock } from 'lucide-react';
+import { Search, Plus, Loader2, CheckCircle2, AlertCircle, RefreshCw, Lock, Smartphone } from 'lucide-react';
 import { API_BASE, adminHeaders } from '../lib/api.js';
 
 const GRADES = [
@@ -32,7 +32,6 @@ const STATUS_STYLE = {
   RETIRED: { bg: '#ECEAE3', fg: '#8A8A93', label: 'Retired' },
 };
 
-// 💡 强大的本地备用型号列表！当数据库没有型号时，自动启用它们进行录入
 const FALLBACK_MODELS = [
   { id: 'iphone-11', name: 'iPhone 11', storageGb: 128, colorway: 'Black' },
   { id: 'iphone-12', name: 'iPhone 12', storageGb: 128, colorway: 'Graphite' },
@@ -46,7 +45,6 @@ export default function AdminDashboard() {
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState(false);
 
-  // 检查浏览器里是否已经存过正确密码
   useEffect(() => {
     const savedKey = localStorage.getItem('titan_admin_token');
     const targetKey = import.meta.env.VITE_ADMIN_API_KEY || 'admin_naija_phones_password_2026_secure';
@@ -67,7 +65,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // 🔒 密码锁定安全屏障
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center p-6">
@@ -144,7 +141,6 @@ function EntryForm() {
     fetch(`${API_BASE}/api/admin/models`, { headers: adminHeaders() })
       .then((r) => r.json())
       .then((body) => {
-        // 如果后端有数据就用后端的，如果是空的，直接无缝切到本地备用型号列表！
         if (body?.data?.items && body.data.items.length > 0) {
           setModels(body.data.items);
         } else {
@@ -233,7 +229,8 @@ function EntryForm() {
             className={inputCls}
             tabIndex={2}
           >
-            <option value="">Select a model…</option>
+            {/* 💡 爆改点：阿布贾！ */}
+            <option value="">Select a premium model…</option>
             {models.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name} · {m.storageGb || 128}GB · {m.colorway || 'Default'}
@@ -367,7 +364,6 @@ function EntryForm() {
   );
 }
 
-// 保持其余子组件原有代码不变（为了节省空间，省略其余包装函数，但在仓库里它们依然健在）
 function FlashMessage({ flash }) {
   if (!flash) return <span className="text-xs text-ink-tertiary" />;
   const Icon = flash.kind === 'success' ? CheckCircle2 : AlertCircle;
