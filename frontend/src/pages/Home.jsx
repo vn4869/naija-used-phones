@@ -57,10 +57,10 @@ export default function Home() {
 
         {loading && <p className="text-sm text-ink-tertiary">Loading inventory…</p>}
 
-        {!loading && products.length === 0 && (
+       {!loading && products.length === 0 && (
           <div className="bg-white border border-border-subtle rounded-2xl p-8 text-center">
-            <p className="text-ink-secondary mb-1">New arrivals coming soon!</p>
-            <p className="text-xs text-ink-tertiary">Our curated premium inventory is updated daily. Check back shortly.</p>
+            <p className="text-base font-semibold text-ink mb-2">New arrivals coming soon!</p>
+            <p className="text-xs text-ink-tertiary">
               Our curated premium inventory is updated daily. Check back shortly.
             </p>
           </div>
