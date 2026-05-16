@@ -1,6 +1,6 @@
 /**
  * Storefront home page.
- * Enhanced with official retail product renders for full premium visual identity.
+ * Enhanced with official retail product renders & localized for Abuja.
  */
 
 import { useEffect, useState } from 'react';
@@ -57,7 +57,7 @@ export default function Home() {
 
         {loading && <p className="text-sm text-ink-tertiary">Loading inventory…</p>}
 
-       {!loading && products.length === 0 && (
+        {!loading && products.length === 0 && (
           <div className="bg-white border border-border-subtle rounded-2xl p-8 text-center">
             <p className="text-base font-semibold text-ink mb-2">New arrivals coming soon!</p>
             <p className="text-xs text-ink-tertiary">
@@ -117,7 +117,7 @@ function Hero() {
             The iPhone you want.<br/>The price you deserve.
           </h1>
           <p className="text-ink-secondary text-base max-w-md leading-relaxed">
-            Hand-inspected, IMEI-verified, backed by a 12-month warranty. Free Lagos delivery in 24–48 hours.
+            Hand-inspected, IMEI-verified, backed by a 12-month warranty. {/* 💡 爆改点：阿布贾！ */} Free Abuja delivery in 24–48 hours.
           </p>
         </div>
         <div className="flex gap-3">
@@ -129,11 +129,10 @@ function Hero() {
           </a>
         </div>
       </div>
-      {/* 📸 爆改点一：首页右侧完美的 iPhone 15 Pro Max 官方实物大图悬浮展示 */}
       <div className="aspect-square bg-white border border-border-subtle rounded-3xl flex items-center justify-center p-8 overflow-hidden shadow-sm hover:scale-[1.01] transition-transform duration-3xl">
         <img 
-          src="/iphone.png"
-          alt="Premium iPhone Display"
+          src="/iphone.png" 
+          alt="Premium iPhone Display" 
           className="h-full w-full object-contain filter drop-shadow-xl"
         />
       </div>
@@ -146,7 +145,7 @@ function TrustStrip() {
     { icon: ShieldCheck, label: '12-month warranty' },
     { icon: RotateCw, label: '30-day returns' },
     { icon: Fingerprint, label: 'IMEI verified' },
-    { icon: Truck, label: 'Lagos delivery' },
+    { icon: Truck, label: 'Abuja delivery' }, // 💡 爆改点：阿布贾！
   ];
   return (
     <section className="bg-white border-y border-border-subtle">
@@ -167,12 +166,11 @@ function ProductCard({ product, busy, onBuy }) {
   const ngn = p.priceNgn ? Number(p.priceNgn).toLocaleString('en-NG') : '—';
   const model = p.productModel;
 
-  // 💡 爆改点二：根据录入的型号自动匹配对应的高清产品切图（默认采用万能的正面精美商品图）
   const getProductImage = (modelName) => {
     const name = modelName?.toLowerCase() || '';
-    if (name.includes('15')) return "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=400&q=80";
-    if (name.includes('14')) return "https://images.unsplash.com/photo-1663499482523-1c0c1ebe4cc2?auto=format&fit=crop&w=400&q=80";
-    return "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=400&q=80";
+    if (name.includes('15')) return "/iphone.png";
+    if (name.includes('14')) return "/iphone.png";
+    return "/iphone.png";
   };
 
   return (
@@ -220,7 +218,7 @@ function HowItWorks() {
   const steps = [
     { icon: Smartphone, title: 'Choose your device', body: 'Every unit has its own grade, battery health, and IMEI on the page.' },
     { icon: Lock, title: 'Pay securely', body: 'Paystack handles card, bank transfer, and USSD in one place.' },
-    { icon: Package, title: 'Receive in 24–48h', body: 'Free Lagos delivery. Nationwide via DHL with insured tracking.' },
+    { icon: Package, title: 'Receive in 24–48h', body: 'Free Abuja delivery. Nationwide via DHL with insured tracking.' }, // 💡 爆改点：阿布贾！
   ];
   return (
     <section id="how" className="max-w-6xl mx-auto px-6 py-16">
