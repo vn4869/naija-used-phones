@@ -1,0 +1,211 @@
+// =====================================================================
+// Premium Used / Refurbished Smartphone Marketplace — Database Schema
+//
+// Picked Prisma + PostgreSQL because:
+//   - the marketplace is inherently relational (Brand → Model → Unit → Order)
+//   - Prisma gives us migrations, types, and transactions in one toolchain
+//   - PostgreSQL's row-level locking + unique constraints are exactly what
+//     we need to enforce "One Device, One Condition" and prevent double-selling
+//
+// Run:
+//   npx prisma migrate dev --name init
+//   npx prisma generate
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+/// Lifecycle of a physical phone in our inventory.
+/// IN_INSPECTION → AVAILABLE → RESERVED → SOLD is the happy path.
+enum DeviceStatus {
+  IN_INSPECTION // Just arrived; QA + grading in progress
+  AVAILABLE     // Listed and buyable
+  RESERVED      // Held during an active checkout (with reservedUntil)
+  SOLD          // Paid for; permanently allocated to a customer
+  RETURNED      // Came back from a customer; pending re-inspection
+  RETIRED       // Pulled from sale (damaged, recalled, etc.)
+}
+
+/// Cosmetic grading scale shown on product cards.
+enum CosmeticGrade {
+  BRAND_NEW  // Sealed retail unit
+  LIKE_NEW   // A+  — virtually indistinguishable from new
+  EXCELLENT  // A   — minor signs of use, no visible damage
+  GOOD       // B   — visible wear, fully functional
+  FAIR       // C   — heavier wear, fully functional
+}
+
+enum OrderStatus {
+  PENDING    // Awaiting payment
+  PAID       // charge.success received and validated
+  FAILED     // Paystack reported failure
+  CANCELLED  // User abandoned / we cancelled
+  REFUNDED   // Post-paid refund processed
+}
+
+// ---------- Catalog ----------
+
+model Brand {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  slug      String         @unique
+  logoUrl   String?
+  models    ProductModel[]
+  createdAt DateTime       @default(now())
+}
+
+/// The "template" — e.g. "iPhone 15 Pro · 256GB · Natural Titanium".
+/// Many DeviceUnits will share a ProductModel; each unit has its own
+/// IMEI, grade, battery health, price, and photographs.
+model ProductModel {
+  id            String       @id @default(cuid())
+  brandId       String
+  brand         Brand        @relation(fields: [brandId], references: [id])
+  name          String       // "iPhone 15 Pro"
+  slug          String       @unique // "iphone-15-pro-256gb-natural-titanium"
+  storageGb     Int
+  colorway      String       // "Natural Titanium"
+  releaseYear   Int
+  heroImageRef  String?      // matches our image manifest, e.g. "img_iphone_pro_natural_titanium"
+  baseRetailNgn BigInt?      // optional MSRP for "you save X%" display
+  units         DeviceUnit[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([brandId])
+}
+
+// ---------- Inventory (the heart of "One Device, One Condition") ----------
+
+/// One physical phone. IMEI is globally unique, enforced at the DB level
+/// — that's what makes accidentally listing the same handset twice
+/// impossible, not just unlikely.
+model DeviceUnit {
+  id               String        @id @default(cuid())
+
+  /// Internal SKU we generate, human-readable — "IP15P-256-NT-A1F3X9".
+  sku              String        @unique
+
+  /// Globally unique device identifier. Indexed + unique to enforce
+  /// the "One Device, One Condition" rule.
+  imei             String        @unique
+
+  /// Many phones also have a serial; optional but unique when present.
+  serialNumber     String?       @unique
+
+  productModelId   String
+  productModel     ProductModel  @relation(fields: [productModelId], references: [id])
+
+  cosmeticGrade    CosmeticGrade
+  batteryHealthPct Int           // 0–100
+  status           DeviceStatus  @default(IN_INSPECTION)
+
+  /// Snapshot price for this specific unit, stored in kobo (Paystack's
+  /// native unit). BigInt keeps high-value devices safe from float drift
+  /// and avoids any conversion math on the way to Paystack.
+  priceKobo        BigInt
+
+  /// Reservation window. When a customer initiates checkout, status
+  /// flips to RESERVED and reservedUntil is set. A scheduled job
+  /// releases expired reservations back to AVAILABLE.
+  reservedUntil      DateTime?
+  reservedByOrderId  String?     @unique
+
+  /// Free-form QA notes ("hairline scratch on lower-left bezel").
+  notes            String?
+
+  /// Image asset keys from our image manifest, in display order.
+  galleryImageRefs String[]
+
+  /// Audit: email of the admin who added this unit. Populated from
+  /// the X-Admin-Email header on POST /api/admin/inventory.
+  addedByEmail     String?
+
+  orders           Order[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([productModelId, status])
+  @@index([status])
+}
+
+// ---------- Customers & orders ----------
+
+model Customer {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  phone     String?
+  fullName  String
+  orders    Order[]
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id                 String       @id @default(cuid())
+
+  /// Public-facing reference handed to Paystack. Also our idempotency
+  /// key per checkout attempt.
+  reference          String       @unique
+
+  customerId         String
+  customer           Customer     @relation(fields: [customerId], references: [id])
+
+  deviceUnitId       String
+  deviceUnit         DeviceUnit   @relation(fields: [deviceUnitId], references: [id])
+
+  /// Frozen at checkout — we never trust the webhook to tell us the
+  /// price. Both Naira and Kobo are kept so audits don't need to do math.
+  amountNgn          BigInt
+  amountKobo         BigInt
+
+  status             OrderStatus  @default(PENDING)
+  paystackAccessCode String?
+  paystackAuthUrl    String?
+  paidAt             DateTime?
+  payments           Payment[]
+
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+}
+
+/// One row per successful charge. Keeps the raw Paystack payload for audit.
+model Payment {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  reference   String   // Paystack reference (matches order.reference)
+  amountKobo  BigInt
+  channel     String?  // "card" | "bank_transfer" | "ussd" | ...
+  status      String   // "success" | "failed"
+  paidAt      DateTime?
+  rawResponse Json
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([reference])
+}
+
+/// Idempotency table for webhooks. Paystack will retry the same event id;
+/// the unique constraint here means a duplicate delivery never re-runs
+/// the side effects (selling a device twice).
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  paystackId  String   @unique  // Paystack's data.id
+  eventType   String              // "charge.success", "charge.failed", ...
+  reference   String?
+  payload     Json
+  processedAt DateTime @default(now())
+
+  @@index([reference])
+}
